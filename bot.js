@@ -11,8 +11,9 @@ const bot = new Client({
 });
 
 const TRIGGER_MESSAGE = process.env.TRIGGER_MESSAGE || "!P";
+const TOKEN = process.env.DISCORD_BOT_TOKEN;
 
-bot.login(process.env.DISCORD_BOT_TOKEN);
+bot.login(TOKEN);
 
 bot.on("ready", () => {
   console.log("✅ The AI bot is online");
@@ -21,10 +22,10 @@ bot.on("ready", () => {
 bot.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  const content = message.content.trim();
+  const content = message.content;
   if (!content.startsWith(TRIGGER_MESSAGE)) return;
 
-  const query = content.slice(TRIGGER_MESSAGE.length).trim();
+  const query = content.replace(TRIGGER_MESSAGE, "").trim();
   if (!query) return;
 
   console.log("🚀 ユーザーからの質問:", query);
@@ -35,7 +36,7 @@ bot.on("messageCreate", async (message) => {
     console.log("🤖 GPT応答:", response);
     message.channel.send(response);
   } catch (err) {
-    console.error("❌ BOTエラー:", err.message);
-    message.channel.send("⚠️ 回答中にエラーが発生しました。しばらくしてから再試行してください。");
+    console.error("❌ エラー:", err.message);
+    message.channel.send("⚠️ 回答中にエラーが発生しました。後でもう一度試してください。");
   }
 });
