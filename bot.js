@@ -10,7 +10,7 @@ const bot = new Client({
   ],
 });
 
-const TRIGGER_MESSAGE = process.env.TRIGGER_MESSAGE;
+const TRIGGER_MESSAGE = process.env.TRIGGER_MESSAGE || "!P";
 
 bot.login(process.env.DISCORD_BOT_TOKEN);
 
@@ -32,6 +32,17 @@ bot.on("messageCreate", async (message) => {
 
   try {
     const response = await ask(query);
+
+    // ログに検索の有無を表示
+    const needsSearch = ["ニュース", "天気", "今日", "速報", "最近"].some((kw) =>
+      query.includes(kw)
+    );
+    if (needsSearch) {
+      console.log("🔍 Google検索が行われました。");
+    } else {
+      console.log("📘 通常のAI応答です。");
+    }
+
     console.log("🤖 BOT response: ", response);
     message.channel.send(response);
   } catch (err) {
