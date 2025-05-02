@@ -1,6 +1,8 @@
 const { Client, GatewayIntentBits } = require("discord.js");
 const { ask } = require("./ai");
+const { sendDailyReport } = require("./schedulerTasks");
 require("dotenv").config();
+const cron = require("node-cron");
 
 const bot = new Client({
   intents: [
@@ -11,12 +13,22 @@ const bot = new Client({
 });
 
 const TRIGGER_MESSAGE = process.env.TRIGGER_MESSAGE || "!P";
-const TOKEN = process.env.DISCORD_BOT_TOKEN;
+const CHANNEL_ID = process.env.DAILY_REPORT_CHANNEL_ID;
 
-bot.login(TOKEN);
+bot.login(process.env.DISCORD_BOT_TOKEN);
 
 bot.on("ready", () => {
   console.log("✅ The AI bot is online");
+
+  // ⏰ 毎日8:30に定期レポートを送信
+  cron.schedule("30 8 * * *", async () => {
+    try {
+      console.log("🕗 定期レポートを送信します");
+      await sendDailyReport(bot);
+    } catch (err) {
+      console.error("❌ 定期レポート送信エラー:", err.message);
+    }
+  });
 });
 
 bot.on("messageCreate", async (message) => {
@@ -36,7 +48,7 @@ bot.on("messageCreate", async (message) => {
     console.log("🤖 GPT応答:", response);
     message.channel.send(response);
   } catch (err) {
-    console.error("❌ エラー:", err.message);
-    message.channel.send("⚠️ 回答中にエラーが発生しました。後でもう一度試してください。");
+    console.error("❌ 応答エラー:", err.message);
+    message.channel.send("⚠️ 回答中にエラーが発生しました。しばらくしてから再試行してください。");
   }
 });
