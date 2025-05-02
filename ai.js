@@ -9,32 +9,31 @@ const openai = new OpenAI({
 const ask = async (question) => {
   console.log("AI process ...");
 
-  const lowerCaseQuestion = question.toLowerCase();
-  const needsSearch = /ニュース|天気|速報|気温|予報|円相場|為替|今日|現在|今|事故|地震|台風/.test(lowerCaseQuestion);
-
   let searchResultsText = "";
-  if (needsSearch) {
+  try {
     console.log("🔍 Web検索を実行します...");
-    try {
-      const searchResults = await googleSearch(question);
-      searchResultsText = `以下はWeb検索の結果です:\n${searchResults}\nこれに基づいて答えてください。`;
-    } catch (searchErr) {
-      console.warn("⚠️ Web検索に失敗:", searchErr.message);
-      searchResultsText = "⚠️ Web検索に失敗しましたが、できる限り正確に回答してください。";
-    }
+    const searchResults = await googleSearch(question); // 配列で複数件受け取る
+    searchResultsText = searchResults
+      .slice(0, 3)
+      .map((item, index) => `【検索${index + 1}】${item.title}\n${item.snippet}\n${item.link}`)
+      .join("\n\n");
+  } catch (searchErr) {
+    console.warn("⚠️ Web検索に失敗:", searchErr.message);
+    searchResultsText = "※検索結果の取得に失敗しましたが、可能な範囲で回答してください。";
   }
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o", // GPT-4.1相当モデル
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: searchResultsText
-            ? searchResultsText
-            : "ユーザーの質問に対して正確かつ簡潔に答えてください。",
+          content: "あなたは質問に答えるAIアシスタントです。ユーザーの質問に対し、以下に与えられる検索結果を必ず参考にして、正確で簡潔な回答を出してください。",
         },
-        { role: "user", content: question },
+        {
+          role: "user",
+          content: `質問: ${question}\n\n${searchResultsText}`,
+        },
       ],
       temperature: 0.7,
     });
