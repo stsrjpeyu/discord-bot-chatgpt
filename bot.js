@@ -1,6 +1,5 @@
 const { Client, GatewayIntentBits } = require("discord.js");
 const { ask } = require("./ai");
-const { googleSearch } = require("./googleSearch");
 require("dotenv").config();
 
 const bot = new Client({
@@ -16,33 +15,27 @@ const TRIGGER_MESSAGE = process.env.TRIGGER_MESSAGE;
 bot.login(process.env.DISCORD_BOT_TOKEN);
 
 bot.on("ready", () => {
-  console.log("The AI bot is online");
+  console.log("✅ The AI bot is online");
 });
 
 bot.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
   const content = message.content;
-  if (content.startsWith(TRIGGER_MESSAGE)) {
-    const query = content.replace(TRIGGER_MESSAGE, "").trim();
-    if (!query) return;
+  if (!content.startsWith(TRIGGER_MESSAGE)) return;
 
-    message.channel.sendTyping();
-    console.log("🚀 NOOB request: ", query);
+  const query = content.replace(TRIGGER_MESSAGE, "").trim();
+  if (!query) return;
 
-    // キーワードから検索が必要か判断
-    const searchKeywords = ["天気", "ニュース", "何", "いつ", "誰", "どこ", "気温", "検索"];
-    const needSearch = searchKeywords.some((keyword) => query.includes(keyword));
+  console.log("🚀 NOOB request: ", query);
+  message.channel.sendTyping();
 
-    let context = "";
-    if (needSearch) {
-      console.log("🔍 実行: Google検索");
-      const searchResult = await googleSearch(query);
-      context = `以下はGoogle検索結果です:\n${searchResult}\n\nこれを参考にしてください。`;
-    }
-
-    const response = await ask(`${context}\n質問: ${query}`);
+  try {
+    const response = await ask(query);
     console.log("🤖 BOT response: ", response);
     message.channel.send(response);
+  } catch (err) {
+    console.error("❌ BOT error:", err.message);
+    message.channel.send("⚠️ 回答中にエラーが発生しました。しばらくしてから再試行してください。");
   }
 });
