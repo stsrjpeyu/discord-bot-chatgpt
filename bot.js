@@ -21,10 +21,10 @@ bot.on("ready", () => {
 bot.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  const content = message.content;
+  const content = message.content.trim();
   if (!content.startsWith(TRIGGER_MESSAGE)) return;
 
-  const query = content.replace(TRIGGER_MESSAGE, "").trim();
+  const query = content.slice(TRIGGER_MESSAGE.length).trim();
   if (!query) return;
 
   console.log("🚀 ユーザーからの質問:", query);
@@ -35,7 +35,7 @@ bot.on("messageCreate", async (message) => {
     console.log("🤖 GPT応答:", response);
     message.channel.send(response);
   } catch (err) {
-    console.error("❌ BOT処理エラー:", err.message);
-    message.channel.send("⚠️ 回答中にエラーが発生しました。しばらくしてからもう一度お試しください。");
+    console.error("❌ BOTエラー:", err.message);
+    message.channel.send("⚠️ 回答中にエラーが発生しました。しばらくしてから再試行してください。");
   }
 });
