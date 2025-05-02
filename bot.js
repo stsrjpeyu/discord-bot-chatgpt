@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits } = require("discord.js");
+const { Client, GatewayIntentBits, Events } = require("discord.js");
 const { ask } = require("./ai");
 const { sendDailyReport } = require("./schedulerTasks");
 require("dotenv").config();
@@ -31,6 +31,7 @@ bot.on("ready", () => {
   });
 });
 
+// ✉️ 通常メッセージによるトリガー
 bot.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
@@ -50,5 +51,23 @@ bot.on("messageCreate", async (message) => {
   } catch (err) {
     console.error("❌ 応答エラー:", err.message);
     message.channel.send("⚠️ 回答中にエラーが発生しました。しばらくしてから再試行してください。");
+  }
+});
+
+// 💬 スラッシュコマンド対応
+bot.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  if (interaction.commandName === "ask") {
+    const userMessage = interaction.options.getString("question");
+    await interaction.deferReply();
+
+    try {
+      const response = await ask(userMessage);
+      await interaction.editReply(response);
+    } catch (err) {
+      console.error("❌ スラッシュコマンド応答エラー:", err.message);
+      await interaction.editReply("⚠️ 回答中にエラーが発生しました。");
+    }
   }
 });
