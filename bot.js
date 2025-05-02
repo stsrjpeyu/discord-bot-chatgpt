@@ -27,26 +27,15 @@ bot.on("messageCreate", async (message) => {
   const query = content.replace(TRIGGER_MESSAGE, "").trim();
   if (!query) return;
 
-  console.log("🚀 NOOB request: ", query);
+  console.log("🚀 ユーザーからの質問:", query);
   message.channel.sendTyping();
 
   try {
     const response = await ask(query);
-
-    // ログに検索の有無を表示
-    const needsSearch = ["ニュース", "天気", "今日", "速報", "最近"].some((kw) =>
-      query.includes(kw)
-    );
-    if (needsSearch) {
-      console.log("🔍 Google検索が行われました。");
-    } else {
-      console.log("📘 通常のAI応答です。");
-    }
-
-    console.log("🤖 BOT response: ", response);
+    console.log("🤖 GPT応答:", response);
     message.channel.send(response);
   } catch (err) {
-    console.error("❌ BOT error:", err.message);
-    message.channel.send("⚠️ 回答中にエラーが発生しました。しばらくしてから再試行してください。");
+    console.error("❌ BOT処理エラー:", err.message);
+    message.channel.send("⚠️ 回答中にエラーが発生しました。しばらくしてからもう一度お試しください。");
   }
 });
