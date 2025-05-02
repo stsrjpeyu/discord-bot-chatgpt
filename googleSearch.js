@@ -8,26 +8,21 @@ const googleSearch = async (query) => {
 
   try {
     const response = await axios.get(url);
-    const results = response.data.items;
+    const items = response.data.items;
 
-    if (!results || results.length === 0) {
-      return [{
-        title: "検索結果なし",
-        snippet: "検索に一致する情報は見つかりませんでした。",
-        link: "https://www.google.com/",
-      }];
+    if (!items || items.length === 0) {
+      return "検索結果が見つかりませんでした。";
     }
 
-    // 上位3件まで返す（title, snippet, link を含む）
-    return results.slice(0, 3).map(item => ({
-      title: item.title,
-      snippet: item.snippet,
-      link: item.link,
-    }));
+    // 上位3件までを要約に含める
+    const summary = items.slice(0, 3).map((item, index) => {
+      return `【${index + 1}件目】\n${item.title}\n${item.snippet}\n${item.link}`;
+    }).join("\n\n");
 
+    return summary;
   } catch (error) {
     console.error("Google検索エラー:", error.response?.data || error.message);
-    throw new Error("Google検索でエラーが発生しました。");
+    return "Google検索でエラーが発生しました。";
   }
 };
 
