@@ -1,63 +1,54 @@
 const { googleSearch } = require("./googleSearch");
-const axios = require("axios");
 require("dotenv").config();
 
 const CHANNEL_ID = process.env.DAILY_REPORT_CHANNEL_ID;
 
+// ✅ Google検索を使った天気取得
 const getDailyWeather = async () => {
-  const locations = [
-    { name: "横浜市", lat: 35.4437, lon: 139.6380 },
-    { name: "東京都", lat: 35.6895, lon: 139.6917 },
-    { name: "つくば市", lat: 36.0836, lon: 140.0766 },
+  const queries = [
+    { name: "横浜市", query: "横浜 天気" },
+    { name: "東京都", query: "東京 天気" },
+    { name: "つくば市", query: "つくば 天気" },
   ];
 
-  const weatherKey = process.env.OPENWEATHER_API_KEY;
   const results = [];
 
-  for (const loc of locations) {
+  for (const loc of queries) {
     try {
-      const res = await axios.get(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${loc.lat}&lon=${loc.lon}&units=metric&lang=ja&appid=${weatherKey}`
-      );
-      const data = res.data;
-      results.push(`${loc.name}: ${data.weather[0].description}, 気温 ${data.main.temp}°C`);
-    } catch (err) {
-      console.error(`❌ 天気情報取得エラー (${loc.name}):`, err.message);
-      results.push(`${loc.name}: 天気情報を取得できませんでした`);
+      const searchResult = await googleSearch(loc.query);
+      results.push(`${loc.name}: ${searchResult}`);
+    } catch (error) {
+      results.push(`${loc.name}: 天気情報の取得に失敗しました`);
+      console.error(`❌ 天気情報取得エラー (${loc.name}):`, error.message);
     }
   }
 
-  return `🌤 今日の天気:\n${results.join("\n")}`;
+  return `🌤 今日の天気（Google検索結果ベース）:\n\n${results.join("\n\n")}`;
 };
 
+// ✅ Google検索を使った日経ニュース取得
 const getDailyNews = async () => {
   try {
-    const query = "日経 今日のニュース";
-    const results = await googleSearch(query);
-    return `📰 今日のニュース:\n${results}`;
-  } catch (err) {
-    console.error("❌ ニュース取得エラー:", err.message);
-    return "📰 今日のニュース: ニュースの取得に失敗しました。";
+    const results = await googleSearch("日経 今日のニュース");
+    return `📰 今日のニュース:\n\n${results}`;
+  } catch (error) {
+    console.error("❌ ニュース取得エラー:", error.message);
+    return "📰 ニュース情報の取得に失敗しました。";
   }
 };
 
+// ✅ Discordへ送信
 const sendDailyReport = async (client) => {
-  try {
-    const channel = await client.channels.fetch(CHANNEL_ID);
-
-    if (!channel || !channel.isTextBased()) {
-      console.error("⚠️ 有効なテキストチャンネルが見つかりません");
-      return;
-    }
-
-    const weather = await getDailyWeather();
-    const news = await getDailyNews();
-
-    await channel.send(`${weather}\n\n${news}`);
-    console.log("✅ 定期レポート送信完了");
-  } catch (err) {
-    console.error("❌ 定期レポート送信エラー:", err.message);
+  const channel = await client.channels.fetch(CHANNEL_ID);
+  if (!channel) {
+    console.error("⚠️ 指定されたチャンネルが見つかりません");
+    return;
   }
+
+  const weather = await getDailyWeather();
+  const news = await getDailyNews();
+
+  await channel.send(`${weather}\n\n${news}`);
 };
 
 module.exports = {
