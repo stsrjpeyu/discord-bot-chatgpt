@@ -23,7 +23,7 @@ bot.on("ready", () => {
 
   // ⏰ 毎日 8:30 JST に定期レポートを送信（Asia/Tokyo timezone 明示）
 cron.schedule(
-  "00 15 * * *", // ← 14:45 JST に実行
+  "06 15 * * *", // ← 14:45 JST に実行
   async () => {
     try {
       console.log("🧪 テスト実行: 定期レポート送信テスト（14:45 JST）");
