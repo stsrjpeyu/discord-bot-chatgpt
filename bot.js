@@ -22,21 +22,21 @@ bot.on("ready", () => {
   console.log("✅ The AI bot is online");
 
   // ⏰ 毎日 8:30 JST に定期レポートを送信（Asia/Tokyo timezone 明示）
-cron.schedule(
-  "30 08 * * *", // ← 8:30 JST に実行
-  async () => {
-    try {
-      console.log("🕗 定期レポート送信タスク実行開始（JST 8:30）");
-      await sendDailyReport(bot);
-      console.log("✅ 定期レポート送信成功");
-    } catch (err) {
-      console.error("❌ 定期レポート送信エラー:", err.message);
+  cron.schedule(
+    "30 08 * * *",
+    async () => {
+      try {
+        console.log("🕗 定期レポート送信タスク実行開始（JST 8:30）");
+        await sendDailyReport(bot);
+        console.log("✅ 定期レポート送信成功");
+      } catch (err) {
+        console.error("❌ 定期レポート送信エラー:", err.message);
+      }
+    },
+    {
+      timezone: "Asia/Tokyo",
     }
-  },
-  {
-    timezone: "Asia/Tokyo",
-  }
-);
+  );
 
   console.log("🕘 定期タスク登録完了");
 });
@@ -51,11 +51,13 @@ bot.on("messageCreate", async (message) => {
   const query = content.replace(TRIGGER_MESSAGE, "").trim();
   if (!query) return;
 
-  console.log("🚀 ユーザーからの質問:", query);
+  const userId = message.author.id;
+  console.log(`🚀 ユーザー(${userId})からの質問:`, query);
+
   message.channel.sendTyping();
 
   try {
-    const response = await ask(query);
+    const response = await ask(query, userId);
     console.log("🤖 GPT応答:", response);
     message.channel.send(response);
   } catch (err) {
@@ -70,10 +72,11 @@ bot.on(Events.InteractionCreate, async (interaction) => {
 
   if (interaction.commandName === "ask") {
     const userMessage = interaction.options.getString("question");
+    const userId = interaction.user.id;
     await interaction.deferReply();
 
     try {
-      const response = await ask(userMessage);
+      const response = await ask(userMessage, userId);
       await interaction.editReply(response);
     } catch (err) {
       console.error("❌ スラッシュコマンド応答エラー:", err.message);
