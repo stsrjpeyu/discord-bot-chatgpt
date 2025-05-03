@@ -5,18 +5,24 @@ const CHANNEL_ID = process.env.DAILY_REPORT_CHANNEL_ID;
 
 const getDailyWeather = async () => {
   const locations = [
-    { name: "横浜市", query: "横浜市 天気", icon: "🛳️" },     // 横浜港・みなとみらいのイメージ
-    { name: "東京都", query: "東京都 天気", icon: "🗼" },       // 東京タワー
-    { name: "つくば市", query: "つくば市 天気", icon: "🔬" },   // 研究学園都市のイメージ
+    { name: "横浜市", query: "横浜市 天気", icon: "🛳️" },
+    { name: "東京都", query: "東京都 天気", icon: "🗼" },
+    { name: "つくば市", query: "つくば市 天気", icon: "🔬" },
   ];
 
   const resultLines = [];
 
   for (const loc of locations) {
     try {
-      const topResult = await googleSearch(loc.query);
-      const brief = topResult.split("\n")[0]; // 検索結果の1行目のみ抽出
-      resultLines.push(`${loc.icon} ${loc.name}: ${brief}`);
+      const searchResult = await googleSearch(loc.query);
+
+      // タイトル・スニペット・URLが "\n" で区切られている前提
+      const parts = searchResult.split("\n");
+      const title = parts[0] || "";
+      const snippet = parts[1] || "";
+
+      const summary = snippet || title || "情報なし";
+      resultLines.push(`${loc.icon} ${loc.name}: ${summary}`);
     } catch (error) {
       resultLines.push(`${loc.icon} ${loc.name}: 天気情報の取得に失敗しました`);
       console.error(`❌ 天気取得エラー (${loc.name}):`, error.message);
