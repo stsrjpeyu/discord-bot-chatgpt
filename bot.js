@@ -23,14 +23,14 @@ bot.on("ready", () => {
 
   // ⏰ 毎日 8:30 JST に定期レポートを送信（Asia/Tokyo timezone 明示）
 cron.schedule(
-  "07 16 * * *", // ← 14:45 JST に実行
+  "30 08 * * *", // ← 8:30 JST に実行
   async () => {
     try {
-      console.log("🧪 テスト実行: 定期レポート送信テスト（14:45 JST）");
+      console.log("🕗 定期レポート送信タスク実行開始（JST 8:30）");
       await sendDailyReport(bot);
-      console.log("✅ テスト送信成功");
+      console.log("✅ 定期レポート送信成功");
     } catch (err) {
-      console.error("❌ テスト送信エラー:", err.message);
+      console.error("❌ 定期レポート送信エラー:", err.message);
     }
   },
   {
