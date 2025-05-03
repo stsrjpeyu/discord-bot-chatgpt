@@ -1,28 +1,23 @@
-const { googleSearch, getWeatherSnippet } = require("./googleSearch");
+const { getWeatherSummary, googleSearch } = require("./googleSearch");
 require("dotenv").config();
 
 const CHANNEL_ID = process.env.DAILY_REPORT_CHANNEL_ID;
 
 const getDailyWeather = async () => {
-  const locations = [
+  const cities = [
     { name: "横浜市", icon: "🛳️" },
     { name: "東京都", icon: "🗼" },
     { name: "つくば市", icon: "🔬" },
   ];
 
-  const results = [];
+  const results = await Promise.all(
+    cities.map(async (city) => {
+      const summary = await getWeatherSummary(city.name);
+      return `${city.icon} ${city.name}: ${summary}`;
+    })
+  );
 
-  for (const loc of locations) {
-    try {
-      const snippet = await getWeatherSnippet(loc.name);
-      results.push(`${loc.icon} ${loc.name}: ${snippet}`);
-    } catch (error) {
-      console.error(`❌ 天気情報取得エラー (${loc.name}):`, error.message);
-      results.push(`${loc.icon} ${loc.name}: 情報取得エラー`);
-    }
-  }
-
-  return `🌤 今日の天気（Google検索ベース）\n${results.join("\n")}`;
+  return `🌤 今日の天気（Google検索ベース）\n${results.join("\n\n")}`;
 };
 
 const getDailyNews = async () => {
