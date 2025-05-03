@@ -50,27 +50,51 @@ const googleSearch = async (query, maxResults = 3) => {
   }
 };
 
-// 天気要約（信頼性のあるソースから1件を抽出）
+// 天気要約（Open-Meteo APIから取得）
 const getWeatherSummary = async (location) => {
-  const query = `${location} の天気`;
-  const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&key=${apiKey}&cx=${cx}`;
+  const coordinates = {
+    "横浜市": { lat: 35.4437, lon: 139.6380 },
+    "東京都": { lat: 35.6895, lon: 139.6917 },
+    "つくば市": { lat: 36.0836, lon: 140.0766 },
+  };
+
+  const loc = coordinates[location];
+  if (!loc) return `${location} の座標が見つかりません`;
 
   try {
-    const response = await axios.get(url);
-    const items = response.data.items;
+    const res = await axios.get("https://api.open-meteo.com/v1/forecast", {
+      params: {
+        latitude: loc.lat,
+        longitude: loc.lon,
+        hourly: "temperature_2m,weathercode,windspeed_10m",
+        timezone: "Asia/Tokyo",
+      },
+    });
 
-    if (!items || items.length === 0) {
-      return "天気情報が見つかりませんでした。";
-    }
+    const { time, temperature_2m, weathercode, windspeed_10m } = res.data.hourly;
+    const today = new Date().toISOString().split("T")[0];
 
-    const trustedSource = items.find(item =>
-      item.link.includes("tenki.jp") || item.link.includes("weather.yahoo.co.jp")
-    ) || items[0];
+    const getHourIndex = (h) => time.findIndex(t => t.startsWith(today) && t.includes(`${h}:00`));
+    const idx9 = getHourIndex("09");
+    const idx15 = getHourIndex("15");
 
-    return `${trustedSource.title}\n${trustedSource.snippet}`;
+    const weatherIcon = (code) => {
+      if ([0].includes(code)) return "☀️";
+      if ([1, 2, 3].includes(code)) return "🌤";
+      if ([45, 48].includes(code)) return "🌫️";
+      if ([51, 53, 55, 61, 63].includes(code)) return "🌦";
+      if ([80, 81, 82].includes(code)) return "🌧";
+      if ([71, 73, 75, 85, 86].includes(code)) return "❄️";
+      return "☁️";
+    };
+
+    return (
+      `午前 ${weatherIcon(weathercode[idx9])} ${temperature_2m[idx9]}℃ / 風 ${windspeed_10m[idx9]}m/s\n` +
+      `午後 ${weatherIcon(weathercode[idx15])} ${temperature_2m[idx15]}℃ / 風 ${windspeed_10m[idx15]}m/s`
+    );
   } catch (err) {
     console.error(`天気情報取得エラー (${location}):`, err.message);
-    return "天気情報取得に失敗しました。";
+    return `${location}: 天気情報取得に失敗しました。`;
   }
 };
 
