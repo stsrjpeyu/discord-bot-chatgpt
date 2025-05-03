@@ -14,24 +14,34 @@ const bot = new Client({
 
 const TRIGGER_MESSAGE = process.env.TRIGGER_MESSAGE || "!P";
 const CHANNEL_ID = process.env.DAILY_REPORT_CHANNEL_ID;
+const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
-bot.login(process.env.DISCORD_BOT_TOKEN);
+bot.login(DISCORD_BOT_TOKEN);
 
 bot.on("ready", () => {
   console.log("✅ The AI bot is online");
 
-  // ⏰ 毎日8:30に定期レポートを送信
-  cron.schedule("30 8 * * *", async () => {
+  // ⏰ 毎日 8:30 JST に定期レポートを送信（Asia/Tokyo timezone 明示）
+cron.schedule(
+  "45 14 * * *", // ← 14:45 JST に実行
+  async () => {
     try {
-      console.log("🕗 定期レポートを送信します");
+      console.log("🧪 テスト実行: 定期レポート送信テスト（14:45 JST）");
       await sendDailyReport(bot);
+      console.log("✅ テスト送信成功");
     } catch (err) {
-      console.error("❌ 定期レポート送信エラー:", err.message);
+      console.error("❌ テスト送信エラー:", err.message);
     }
-  });
+  },
+  {
+    timezone: "Asia/Tokyo",
+  }
+);
+
+  console.log("🕘 定期タスク登録完了");
 });
 
-// ✉️ 通常メッセージによるトリガー
+// ✉️ メッセージによる質問対応
 bot.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
