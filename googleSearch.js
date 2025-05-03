@@ -14,12 +14,24 @@ const googleSearch = async (query) => {
       return "検索結果が見つかりませんでした。";
     }
 
-    // 上位3件までを要約に含める
-    const summary = items.slice(0, 3).map((item, index) => {
-      return `【${index + 1}件目】\n${item.title}\n${item.snippet}\n${item.link}`;
-    }).join("\n\n");
+    // 天気らしい情報を優先的に抜き出す
+    for (const item of items) {
+      const snippet = item.snippet || "";
+      if (
+        snippet.includes("晴") ||
+        snippet.includes("曇") ||
+        snippet.includes("雨") ||
+        snippet.includes("雪") ||
+        snippet.includes("℃") ||
+        snippet.includes("気温")
+      ) {
+        return snippet;
+      }
+    }
 
-    return summary;
+    // 該当がなければ上位1件のタイトル・スニペット・リンクを返す
+    const top = items[0];
+    return `${top.title}\n${top.snippet}\n${top.link}`;
   } catch (error) {
     console.error("Google検索エラー:", error.response?.data || error.message);
     return "Google検索でエラーが発生しました。";
